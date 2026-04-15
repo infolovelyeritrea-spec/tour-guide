@@ -1,0 +1,11 @@
+backend/__pycache__/
+backend/**/__pycache__/
+backend/.env
+backend/db.sqlite3
+backend/*.log
+backend/*.err.log
+frontend/node_modules/
+frontend/dist/
+frontend/*.log
+frontend/*.err.log
+*.pyc
