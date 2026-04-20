@@ -48,7 +48,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-eritrea-tour-guide-
 if not DEBUG and SECRET_KEY == "django-insecure-eritrea-tour-guide-demo-key":
     raise RuntimeError("Set DJANGO_SECRET_KEY before running with DJANGO_DEBUG=False.")
 
-ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1" if DEBUG else "")
+ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,lovelyeritrea.onrender.com" if DEBUG else "")
 if DEBUG and not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
