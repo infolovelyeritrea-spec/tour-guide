@@ -1,7 +1,24 @@
 import os
+from importlib.util import find_spec
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+HAS_WHITENOISE = find_spec("whitenoise") is not None
+
+
+def load_env_file(path):
+    if not path.exists():
+        return
+
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        os.environ.setdefault(key, value)
 
 
 def env_bool(name, default=False):
@@ -22,6 +39,8 @@ def env_list(name, default=""):
     raw = os.getenv(name, default)
     return [item.strip() for item in raw.split(",") if item.strip()]
 
+
+load_env_file(BASE_DIR / ".env")
 
 DEBUG = env_bool("DJANGO_DEBUG", True)
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-eritrea-tour-guide-demo-key")
@@ -47,7 +66,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -56,6 +74,9 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+if HAS_WHITENOISE:
+    MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
 
 ROOT_URLCONF = "backend.urls"
 
@@ -76,23 +97,33 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "backend.wsgi.application"
 
-db_options = {}
-db_sslmode = os.getenv("DJANGO_DB_SSLMODE", "").strip()
-if db_sslmode:
-    db_options["sslmode"] = db_sslmode
+db_name = os.getenv("DJANGO_DB_NAME", "").strip()
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DJANGO_DB_NAME", "tour_guide"),
-        "USER": os.getenv("DJANGO_DB_USER", "postgres"),
-        "PASSWORD": os.getenv("DJANGO_DB_PASSWORD", ""),
-        "HOST": os.getenv("DJANGO_DB_HOST", "127.0.0.1"),
-        "PORT": env_int("DJANGO_DB_PORT", 5432),
-        "CONN_MAX_AGE": env_int("DJANGO_DB_CONN_MAX_AGE", 60),
-        "OPTIONS": db_options,
+if db_name:
+    db_options = {}
+    db_sslmode = os.getenv("DJANGO_DB_SSLMODE", "").strip()
+    if db_sslmode:
+        db_options["sslmode"] = db_sslmode
+
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": db_name,
+            "USER": os.getenv("DJANGO_DB_USER", "postgres"),
+            "PASSWORD": os.getenv("DJANGO_DB_PASSWORD", ""),
+            "HOST": os.getenv("DJANGO_DB_HOST", "127.0.0.1"),
+            "PORT": env_int("DJANGO_DB_PORT", 5432),
+            "CONN_MAX_AGE": env_int("DJANGO_DB_CONN_MAX_AGE", 60),
+            "OPTIONS": db_options,
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = []
 
@@ -103,11 +134,12 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STORAGES = {
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+if HAS_WHITENOISE:
+    STORAGES = {
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        }
     }
-}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
