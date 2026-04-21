@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.contrib.auth import authenticate, login, logout
+from django.db import DatabaseError
 from django.db.models import Count
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -104,6 +105,20 @@ def ensure_seed_data():
             Review.objects.create(**item)
 
 
+def get_visitor_count():
+    try:
+        return VisitorLog.objects.values("ip_address").distinct().count()
+    except DatabaseError:
+        return 0
+
+
+def get_popular_interest():
+    try:
+        return list(VisitorLog.objects.values("path").annotate(total=Count("id")).order_by("-total")[:5])
+    except DatabaseError:
+        return []
+
+
 class HomeDataView(APIView):
     def get(self, request):
         ensure_seed_data()
@@ -121,7 +136,7 @@ class HomeDataView(APIView):
                 "stats": {
                     "destinations": Destination.objects.count(),
                     "bookings": Booking.objects.count(),
-                    "visitors": VisitorLog.objects.values("ip_address").distinct().count(),
+                    "visitors": get_visitor_count(),
                 },
             }
         )
@@ -187,7 +202,10 @@ class TrackVisitorView(APIView):
         if path not in TRACKABLE_PATHS:
             return Response({"message": "Path ignored."}, status=status.HTTP_202_ACCEPTED)
 
-        VisitorLog.objects.create(path=path, ip_address=ip_address, user_agent=user_agent)
+        try:
+            VisitorLog.objects.create(path=path, ip_address=ip_address, user_agent=user_agent)
+        except DatabaseError:
+            return Response({"message": "Visitor tracking unavailable."}, status=status.HTTP_202_ACCEPTED)
         return Response({"message": "Visitor tracked."}, status=status.HTTP_201_CREATED)
 
 
@@ -228,15 +246,14 @@ class DashboardView(APIView):
         reviews = Review.objects.filter(approved=True)
         recent_bookings = BookingSerializer(bookings, many=True).data
         recent_reviews = ReviewSerializer(reviews, many=True).data
-        popular_interest = VisitorLog.objects.values("path").annotate(total=Count("id")).order_by("-total")[:5]
         return Response(
             {
                 "generated_on": str(date.today()),
                 "username": request.user.username,
-                "visitors": VisitorLog.objects.values("ip_address").distinct().count(),
+                "visitors": get_visitor_count(),
                 "bookings": bookings.count(),
                 "booking_details": recent_bookings,
-                "popular_pages": list(popular_interest),
+                "popular_pages": get_popular_interest(),
                 "reviews": recent_reviews,
             }
         )
