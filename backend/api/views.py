@@ -211,6 +211,7 @@ class HomeDataView(APIView):
             {
                 "hero": site_content["hero"],
                 "copy": site_content["copy"],
+                "social_links": site_content["social_links"],
                 "destinations": destinations,
                 "memories": memories,
                 "stats": {

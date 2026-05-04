@@ -49,6 +49,12 @@ class SiteContent(models.Model):
         default="Phone: +291 1 123 456\nEmail: hello@eritreatourguide.com\nAddress: Harnet Avenue, Asmara, Eritrea",
         help_text="One contact detail per line.",
     )
+    whatsapp_url = models.CharField(max_length=255, default="https://wa.me/2911123456", blank=True)
+    whatsapp_detail = models.CharField(max_length=120, default="+291 1 123 456", blank=True)
+    instagram_url = models.CharField(max_length=255, default="https://instagram.com/lovelyeritrea", blank=True)
+    instagram_detail = models.CharField(max_length=120, default="@lovelyeritrea", blank=True)
+    facebook_url = models.CharField(max_length=255, default="https://facebook.com/lovelyeritrea", blank=True)
+    facebook_detail = models.CharField(max_length=120, default="Lovely Eritrea", blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

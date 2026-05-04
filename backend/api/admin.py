@@ -25,6 +25,19 @@ class SiteContentAdmin(admin.ModelAdmin):
         ("Booking", {"fields": ("booking_title", "planning_title", "planning_text")}),
         ("Reviews", {"fields": ("reviews_title", "reviews_subtitle")}),
         ("About and contact", {"fields": ("about_title", "about_text", "contact_title", "contact_details")}),
+        (
+            "Social media contacts",
+            {
+                "fields": (
+                    "whatsapp_url",
+                    "whatsapp_detail",
+                    "instagram_url",
+                    "instagram_detail",
+                    "facebook_url",
+                    "facebook_detail",
+                )
+            },
+        ),
     )
 
     def has_add_permission(self, request):

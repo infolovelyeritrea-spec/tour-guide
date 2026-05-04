@@ -2545,9 +2545,16 @@ select {
 }
 
 .package-gallery-copy {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: grid;
   gap: 8px;
   max-width: 42rem;
+  padding: 4px 64px 16px 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.92));
+  border-bottom: 1px solid rgba(18, 48, 60, 0.08);
+  backdrop-filter: blur(12px);
 }
 
 .package-gallery-copy h3 {
@@ -2616,6 +2623,10 @@ select {
 
   .package-gallery-showcase {
     padding: 18px;
+  }
+
+  .package-gallery-copy {
+    padding-right: 44px;
   }
 
   .package-gallery-grid {

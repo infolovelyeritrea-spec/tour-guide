@@ -215,7 +215,7 @@ function DestinationsSection({
                 <p className="eyebrow">Package Gallery</p>
                 <h3 id="package-gallery-title">{activeGalleryPackage.name}</h3>
                 <p>
-                  A closer look at the atmosphere, stops, and scenery included in this tour package.
+                  {activeGalleryPackage.description}
                 </p>
               </div>
               <div className="package-gallery-grid">

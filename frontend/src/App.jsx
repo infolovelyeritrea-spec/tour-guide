@@ -168,6 +168,11 @@ const fallbackHomeData = {
     secondary_button: "View Tour Packages",
     image_url: "/images/hero/hero.jpg"
   },
+  social_links: [
+    { name: "WhatsApp", href: "https://wa.me/2911123456", detail: "+291 1 123 456", icon: "whatsapp" },
+    { name: "Instagram", href: "https://instagram.com/lovelyeritrea", detail: "@lovelyeritrea", icon: "instagram" },
+    { name: "Facebook", href: "https://facebook.com/lovelyeritrea", detail: "Lovely Eritrea", icon: "facebook" }
+  ],
   destinations: fallbackDestinations,
   memories: fallbackMemories,
   stats: { destinations: 3, bookings: 0, visitors: 0 }
@@ -232,7 +237,8 @@ function normalizeHomeData(data) {
       image_url: normalizeImageUrl(source.hero?.image_url || fallbackHomeData.hero.image_url)
     },
     destinations: normalizedDestinations,
-    memories: (source.memories || fallbackMemories).map(normalizeMemory)
+    memories: (source.memories || fallbackMemories).map(normalizeMemory),
+    social_links: source.social_links || fallbackHomeData.social_links
   };
 }
 
@@ -608,6 +614,7 @@ function App() {
           currencies={currencies}
           onCurrencyChange={setCurrency}
           logoUrl={`${IMAGE_BASE_URL}/images/logo/logo.png`}
+          socialLinks={homeData.social_links}
         />
       </div>
       <div className="page-shell">
@@ -663,6 +670,7 @@ function App() {
           aboutText={text.aboutText}
           contactTitle={text.contactTitle}
           contactDetails={text.contactDetails}
+          socialLinks={homeData.social_links}
         />
       </div>
     </>

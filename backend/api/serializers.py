@@ -20,10 +20,11 @@ def normalize_optional_image_url(obj, file_field_name, fallback_field_name):
 class SiteContentSerializer(serializers.ModelSerializer):
     hero = serializers.SerializerMethodField()
     copy = serializers.SerializerMethodField()
+    social_links = serializers.SerializerMethodField()
 
     class Meta:
         model = SiteContent
-        fields = ["hero", "copy"]
+        fields = ["hero", "copy", "social_links"]
 
     def get_hero(self, obj):
         return {
@@ -52,6 +53,29 @@ class SiteContentSerializer(serializers.ModelSerializer):
             "contactTitle": obj.contact_title,
             "contactDetails": [item.strip() for item in obj.contact_details.splitlines() if item.strip()],
         }
+
+    def get_social_links(self, obj):
+        links = [
+            {
+                "name": "WhatsApp",
+                "href": obj.whatsapp_url,
+                "detail": obj.whatsapp_detail,
+                "icon": "whatsapp",
+            },
+            {
+                "name": "Instagram",
+                "href": obj.instagram_url,
+                "detail": obj.instagram_detail,
+                "icon": "instagram",
+            },
+            {
+                "name": "Facebook",
+                "href": obj.facebook_url,
+                "detail": obj.facebook_detail,
+                "icon": "facebook",
+            },
+        ]
+        return [item for item in links if item["href"]]
 
 
 class DestinationSerializer(serializers.ModelSerializer):
