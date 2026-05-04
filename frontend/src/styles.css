@@ -47,31 +47,34 @@ select {
 }
 
 .site-header {
-  position: fixed;
+  position: sticky;
   top: 0;
-  left: 0;
-  z-index: 1000;
+  z-index: 900;
   width: 100%;
-  padding: 16px 16px 0;
+  border-bottom: 1px solid rgba(14, 116, 144, 0.12);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.96), rgba(241, 250, 252, 0.94)),
+    rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 12px 30px rgba(14, 116, 144, 0.1);
 }
 
 .page-shell {
   width: min(1200px, calc(100% - 32px));
   margin: 0 auto;
-  padding-top: 164px;
+  padding-top: 28px;
   padding-bottom: 48px;
 }
 
 .navbar {
   position: relative;
+  display: grid;
+  grid-template-columns: minmax(250px, auto) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
   width: min(1200px, 100%);
   margin: 0 auto;
-  padding: 16px 22px;
-  border: 1px solid var(--border);
-  border-radius: 28px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.76));
-  backdrop-filter: blur(18px);
-  box-shadow: 0 20px 55px rgba(14, 116, 144, 0.14);
+  padding: 12px 16px;
 }
 
 .navbar-topbar,
@@ -83,10 +86,8 @@ select {
 }
 
 .navbar-stack {
-  margin-top: 14px;
-  padding-top: 14px;
-  padding-right: 190px;
-  border-top: 1px solid rgba(18, 48, 60, 0.08);
+  justify-content: flex-end;
+  min-width: 0;
 }
 
 .brand-zone {
@@ -98,7 +99,7 @@ select {
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   min-width: 0;
 }
 
@@ -106,9 +107,12 @@ select {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
+  width: 50px;
+  height: 50px;
   flex-shrink: 0;
+  border-radius: 18px;
+  background: rgba(14, 116, 144, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(14, 116, 144, 0.08);
 }
 
 .brand-logo {
@@ -137,24 +141,22 @@ select {
 }
 
 .social-strip {
-  position: absolute;
-  top: 50%;
-  right: 22px;
+  position: static;
   display: flex;
   align-items: center;
-  gap: 10px;
-  transform: translateY(-50%);
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .social-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.72);
   color: var(--primary);
   transition:
     transform 160ms ease,
@@ -183,15 +185,18 @@ select {
 .nav-actions {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
 }
 
 .nav-links a {
   position: relative;
-  padding: 10px 0;
+  padding: 10px 12px;
+  border-radius: 999px;
   color: var(--muted);
   font-weight: 600;
-  transition: color 160ms ease;
+  transition:
+    color 160ms ease,
+    background 160ms ease;
 }
 
 .nav-links a::after {
@@ -211,6 +216,7 @@ select {
 .nav-links a:hover,
 .nav-links a:focus-visible {
   color: var(--text);
+  background: rgba(14, 116, 144, 0.08);
 }
 
 .nav-links a:hover::after,
@@ -230,10 +236,10 @@ select {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 8px 6px 14px;
+  padding: 5px 8px 5px 13px;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.74);
   color: var(--text);
   transition:
     border-color 160ms ease,
@@ -588,6 +594,67 @@ select {
   margin: 0;
   color: #1f7a3e;
   font-weight: 600;
+}
+
+.booking-confirmation-card {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid rgba(31, 122, 62, 0.18);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(235, 250, 240, 0.94), rgba(255, 255, 255, 0.9));
+}
+
+.booking-confirmation-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.booking-confirmation-heading span,
+.booking-confirmation-grid span,
+.booking-confirmation-packages > span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.booking-confirmation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.booking-confirmation-grid div,
+.booking-confirmation-package {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid rgba(18, 48, 60, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.booking-confirmation-grid strong,
+.booking-confirmation-package strong {
+  overflow-wrap: anywhere;
+}
+
+.booking-confirmation-packages {
+  display: grid;
+  gap: 10px;
+}
+
+.booking-confirmation-package-list {
+  display: grid;
+  gap: 10px;
+}
+
+.booking-confirmation-package small {
+  color: var(--muted);
 }
 
 .error-message {
@@ -1263,7 +1330,23 @@ select {
 
 @media (max-width: 960px) {
   .page-shell {
-    padding-top: 152px;
+    padding-top: 24px;
+  }
+
+  .navbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 12px;
+  }
+
+  .navbar-stack {
+    grid-column: 1 / -1;
+    justify-content: space-between;
+    padding-top: 12px;
+    border-top: 1px solid rgba(18, 48, 60, 0.08);
+  }
+
+  .social-strip {
+    justify-content: flex-end;
   }
 
   .hero,
@@ -1328,18 +1411,18 @@ select {
 
 @media (max-width: 720px) {
   .site-header {
-    padding: 10px 10px 0;
+    padding: 0;
   }
 
   .page-shell {
     width: min(100% - 20px, 1200px);
-    padding-top: 136px;
+    padding-top: 18px;
   }
 
   .navbar {
+    display: block;
     width: 100%;
-    padding: 14px 16px;
-    border-radius: 24px;
+    padding: 12px 14px;
   }
 
   .menu-toggle {
@@ -1351,7 +1434,10 @@ select {
     display: none;
     flex-direction: column;
     align-items: stretch;
-    padding-right: 0;
+    gap: 14px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(18, 48, 60, 0.08);
   }
 
   .navbar-stack.is-open {
@@ -1365,16 +1451,14 @@ select {
   }
 
   .nav-links a {
-    padding: 12px 0;
+    padding: 12px 14px;
   }
 
   .social-strip {
-    position: static;
     justify-content: flex-start;
     gap: 8px;
     margin-top: 12px;
     padding-top: 12px;
-    transform: none;
     border-top: 1px solid rgba(18, 48, 60, 0.08);
   }
 
@@ -2350,9 +2434,14 @@ select {
 
   .booking-form-intro,
   .booking-total-bar,
+  .booking-confirmation-heading,
   .card-topline {
     flex-direction: column;
     align-items: start;
+  }
+
+  .booking-confirmation-grid {
+    grid-template-columns: 1fr;
   }
 
   .package-cart-button,
@@ -2388,10 +2477,66 @@ select {
   font-weight: 700;
 }
 
+.has-gallery-modal {
+  overflow: hidden;
+}
+
+.package-gallery-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.package-gallery-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(9, 28, 36, 0.68);
+  cursor: pointer;
+}
+
+.package-gallery-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(1120px, 100%);
+  max-height: min(86vh, 920px);
+  overflow: auto;
+  border-radius: 30px;
+  box-shadow: 0 34px 90px rgba(9, 28, 36, 0.34);
+}
+
+.package-gallery-close {
+  position: sticky;
+  top: 16px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: 16px 16px -60px auto;
+  border: 1px solid rgba(18, 48, 60, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 14px 30px rgba(9, 28, 36, 0.18);
+}
+
+.package-gallery-close:hover,
+.package-gallery-close:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(217, 119, 6, 0.36);
+}
+
 .package-gallery-showcase {
   display: grid;
   gap: 18px;
-  margin-top: 26px;
   padding: 24px;
   border: 1px solid rgba(18, 48, 60, 0.08);
   border-radius: 30px;
@@ -2453,6 +2598,22 @@ select {
 }
 
 @media (max-width: 720px) {
+  .package-gallery-modal {
+    padding: 12px;
+  }
+
+  .package-gallery-dialog {
+    max-height: 90vh;
+    border-radius: 24px;
+  }
+
+  .package-gallery-close {
+    width: 40px;
+    height: 40px;
+    margin: 12px 12px -52px auto;
+    font-size: 1.45rem;
+  }
+
   .package-gallery-showcase {
     padding: 18px;
   }

@@ -2,11 +2,62 @@ from datetime import date
 
 from rest_framework import serializers
 
-from .models import Booking, Destination, Memory, Review
+from .models import Booking, Destination, Memory, Review, SiteContent
+
+
+def get_file_or_fallback_url(obj, file_field_name, fallback_field_name):
+    uploaded_file = getattr(obj, file_field_name, None)
+    if uploaded_file:
+        return uploaded_file.url
+    return getattr(obj, fallback_field_name)
+
+
+def normalize_optional_image_url(obj, file_field_name, fallback_field_name):
+    image_url = get_file_or_fallback_url(obj, file_field_name, fallback_field_name)
+    return image_url or None
+
+
+class SiteContentSerializer(serializers.ModelSerializer):
+    hero = serializers.SerializerMethodField()
+    copy = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SiteContent
+        fields = ["hero", "copy"]
+
+    def get_hero(self, obj):
+        return {
+            "title": obj.hero_title,
+            "subtitle": obj.hero_subtitle,
+            "kicker": obj.hero_kicker,
+            "primary_button": obj.hero_primary_button,
+            "secondary_button": obj.hero_secondary_button,
+            "image_url": get_file_or_fallback_url(obj, "hero_image", "hero_image_url"),
+        }
+
+    def get_copy(self, obj):
+        return {
+            "destinations": obj.destinations_title,
+            "destinationsEyebrow": obj.destinations_eyebrow,
+            "destinationsLead": obj.destinations_lead,
+            "memoriesEyebrow": obj.memories_eyebrow,
+            "memoriesTitle": obj.memories_title,
+            "bookingTitle": obj.booking_title,
+            "planningTitle": obj.planning_title,
+            "planningText": obj.planning_text,
+            "reviewsTitle": obj.reviews_title,
+            "reviewsSubtitle": obj.reviews_subtitle,
+            "aboutTitle": obj.about_title,
+            "aboutText": obj.about_text,
+            "contactTitle": obj.contact_title,
+            "contactDetails": [item.strip() for item in obj.contact_details.splitlines() if item.strip()],
+        }
 
 
 class DestinationSerializer(serializers.ModelSerializer):
     highlights = serializers.SerializerMethodField()
+    image_url = serializers.SerializerMethodField()
+    gallery_images = serializers.SerializerMethodField()
 
     class Meta:
         model = Destination
@@ -16,18 +67,37 @@ class DestinationSerializer(serializers.ModelSerializer):
             "region",
             "description",
             "image_url",
+            "price_usd",
             "highlights",
             "travel_time",
+            "gallery_images",
         ]
 
     def get_highlights(self, obj):
         return [item.strip() for item in obj.highlights.split(",") if item.strip()]
 
+    def get_image_url(self, obj):
+        return get_file_or_fallback_url(obj, "image", "image_url")
+
+    def get_gallery_images(self, obj):
+        return [
+            image_url
+            for image_url in (
+                normalize_optional_image_url(item, "image", "image_url") for item in obj.gallery_images.all()
+            )
+            if image_url
+        ]
+
 
 class MemorySerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Memory
         fields = ["id", "title", "location", "description", "image_url"]
+
+    def get_image_url(self, obj):
+        return get_file_or_fallback_url(obj, "image", "image_url")
 
 
 class ReviewSerializer(serializers.ModelSerializer):

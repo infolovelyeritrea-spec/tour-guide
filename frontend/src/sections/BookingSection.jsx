@@ -20,6 +20,7 @@ function BookingSection({
   planningText,
   labels,
   message,
+  confirmation,
   onSubmit,
   selectedPackages,
   currency,
@@ -59,6 +60,7 @@ function BookingSection({
     [selectedPackages]
   );
   const estimatedTotal = basePackagesTotal * Math.max(1, Number(form.group_size) || 1);
+  const confirmationPackages = confirmation?.selected_packages || [];
 
   const handleChange = (event) => {
     const { name, value, type } = event.target;
@@ -268,6 +270,65 @@ function BookingSection({
           </div>
           {error ? <p className="error-message">{error}</p> : null}
           {message ? <p className="success-message">{message}</p> : null}
+          {confirmation ? (
+            <article className="booking-confirmation-card">
+              <div className="booking-confirmation-heading">
+                <span>Booking received</span>
+                <strong>Reference #{confirmation.id}</strong>
+              </div>
+              <div className="booking-confirmation-grid">
+                <div>
+                  <span>Name</span>
+                  <strong>{confirmation.name}</strong>
+                </div>
+                <div>
+                  <span>Email</span>
+                  <strong>{confirmation.email}</strong>
+                </div>
+                <div>
+                  <span>Travel date</span>
+                  <strong>{confirmation.travel_date}</strong>
+                </div>
+                <div>
+                  <span>Travelers</span>
+                  <strong>{confirmation.group_size}</strong>
+                </div>
+                <div>
+                  <span>Adults</span>
+                  <strong>{confirmation.adults}</strong>
+                </div>
+                <div>
+                  <span>Children</span>
+                  <strong>{confirmation.children}</strong>
+                </div>
+                <div>
+                  <span>Infants</span>
+                  <strong>{confirmation.infants}</strong>
+                </div>
+                <div>
+                  <span>{estimatedTotalLabel}</span>
+                  <strong>{formatPrice(currency, confirmation.estimated_total_usd || 0)}</strong>
+                </div>
+              </div>
+              <div className="booking-confirmation-packages">
+                <span>Selected packages</span>
+                {confirmationPackages.length ? (
+                  <div className="booking-confirmation-package-list">
+                    {confirmationPackages.map((item) => (
+                      <div key={item.id || item.name} className="booking-confirmation-package">
+                        <strong>{item.name}</strong>
+                        <small>
+                          {item.region} - {formatPrice(currency, item.price_usd || 0)} {perTravelerLabel}
+                        </small>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p>No tour packages selected.</p>
+                )}
+              </div>
+            </article>
+          ) : null}
         </form>
       </div>
     </section>

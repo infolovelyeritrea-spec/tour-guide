@@ -1,9 +1,9 @@
-﻿function MemoriesSection({ items }) {
+function MemoriesSection({ items, eyebrow, title }) {
   return (
     <section className="content-section memories-section">
       <div className="section-heading">
-        <p className="eyebrow">Recent Memories</p>
-        <h2>Moments Travelers Love Across Eritrea</h2>
+        <p className="eyebrow">{eyebrow}</p>
+        <h2>{title}</h2>
       </div>
       <div className="memory-grid">
         {items.map((item) => (

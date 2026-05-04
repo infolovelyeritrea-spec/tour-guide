@@ -8,15 +8,15 @@ function HeroSection({ hero }) {
 
         <div className="hero-image-overlay">
           <div className="hero-content-panel">
-            <p className="hero-image-kicker">Explore East Africa's hidden coastal jewel</p>
+            <p className="hero-image-kicker">{hero?.kicker}</p>
             <h1>{hero?.title}</h1>
             <p className="hero-text">{hero?.subtitle}</p>
             <div className="hero-actions">
               <a href="#booking" className="primary-btn hero-primary-btn">
-                Start Planning
+                {hero?.primary_button}
               </a>
               <a href="#destinations" className="secondary-btn hero-secondary-btn">
-                <span className="hero-secondary-label">View Tour Packages</span>
+                <span className="hero-secondary-label">{hero?.secondary_button}</span>
                 <span className="hero-secondary-arrow" aria-hidden="true">{"\u2192"}</span>
               </a>
             </div>

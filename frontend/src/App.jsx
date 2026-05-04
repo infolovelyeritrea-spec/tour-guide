@@ -163,6 +163,9 @@ const fallbackHomeData = {
   hero: {
     title: "Discover Eritrea With Confidence",
     subtitle: "Plan memorable cultural, coastal, and city adventures with a simple and welcoming guide.",
+    kicker: "Explore East Africa's hidden coastal jewel",
+    primary_button: "Start Planning",
+    secondary_button: "View Tour Packages",
     image_url: "/images/hero/hero.jpg"
   },
   destinations: fallbackDestinations,
@@ -177,7 +180,7 @@ function normalizeImageUrl(imageUrl) {
 
   try {
     const parsed = new URL(imageUrl, window.location.origin);
-    if (parsed.pathname.startsWith("/images/")) {
+    if (parsed.pathname.startsWith("/images/") || parsed.pathname.startsWith("/media/")) {
       return `${IMAGE_BASE_URL}${parsed.pathname}`;
     }
     return parsed.toString();
@@ -192,7 +195,8 @@ function normalizeDestination(item) {
     ...item,
     id: packageId,
     image_url: normalizeImageUrl(item.image_url),
-    price_usd: item.price_usd || packageBasePricesUsd[packageId] || 150
+    gallery_images: (item.gallery_images || []).map(normalizeImageUrl),
+    price_usd: item.price_usd ?? packageBasePricesUsd[packageId] ?? 150
   };
 }
 
@@ -216,7 +220,9 @@ function normalizeMemory(item) {
 
 function normalizeHomeData(data) {
   const source = data || fallbackHomeData;
-  const normalizedDestinations = ensurePackageCatalog(source.destinations || fallbackDestinations);
+  const sourceDestinations = source.destinations || fallbackDestinations;
+  const normalizedDestinations =
+    source === fallbackHomeData ? ensurePackageCatalog(sourceDestinations) : sourceDestinations.map(normalizeDestination);
 
   return {
     ...source,
@@ -272,6 +278,11 @@ const copy = {
   priceFrom: "From",
   destinationsViewMore: "View more tour packages",
   destinationsViewLess: "Show fewer packages",
+  destinationsEyebrow: "Tour Packages",
+  destinationsLead:
+    "Compare curated Eritrea experiences, add your favorites to cart, and carry them straight into booking.",
+  memoriesEyebrow: "Recent Memories",
+  memoriesTitle: "Moments Travelers Love Across Eritrea",
   addToCart: "Add to cart",
   removeFromCart: "Remove",
   bookingCartTitle: "Selected tour packages",
@@ -341,6 +352,7 @@ function App() {
   const [reviews, setReviews] = useState(() => fallbackReviews.map(normalizeReview));
   const [selectedPackageIds, setSelectedPackageIds] = useState([]);
   const [bookingMessage, setBookingMessage] = useState("");
+  const [bookingConfirmation, setBookingConfirmation] = useState(null);
   const [reviewMessage, setReviewMessage] = useState("");
   const [dashboardData, setDashboardData] = useState(null);
   const [dashboardLoading, setDashboardLoading] = useState(false);
@@ -348,7 +360,7 @@ function App() {
   const [loginError, setLoginError] = useState("");
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
 
-  const text = copy;
+  const text = useMemo(() => ({ ...copy, ...(homeData?.copy || {}) }), [homeData]);
   const pathname = window.location.pathname;
   const isAdmin = pathname === ADMIN_PATH;
 
@@ -447,11 +459,22 @@ function App() {
 
   const submitBooking = async (formData) => {
     setBookingMessage("");
+    setBookingConfirmation(null);
 
     const packageSummary = selectedPackages.length
       ? `Selected tour packages: ${selectedPackages.map((item) => item.name).join(", ")}.`
       : "Selected tour packages: none specified.";
     const extraRequests = [packageSummary, formData.extra_requests].filter(Boolean).join("\n\n");
+    const selectedPackageSnapshot = selectedPackages.map((item) => ({
+      id: item.id,
+      name: item.name,
+      region: item.region,
+      price_usd: item.price_usd || 0,
+      image_url: item.image_url
+    }));
+    const estimatedTotalUsd =
+      selectedPackageSnapshot.reduce((sum, item) => sum + (item.price_usd || 0), 0) *
+      Math.max(1, Number(formData.group_size) || 1);
 
     const response = await fetch(API_BASE + "/bookings/", {
       method: "POST",
@@ -459,7 +482,9 @@ function App() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...formData,
-        extra_requests: extraRequests
+        extra_requests: extraRequests,
+        selected_packages: selectedPackageSnapshot,
+        estimated_total_usd: estimatedTotalUsd
       })
     });
 
@@ -468,7 +493,17 @@ function App() {
       throw new Error(extractApiError(payload, text.form.submitError));
     }
 
-    setBookingMessage(text.bookingSuccess);
+    const createdBooking = await response.json();
+    setBookingMessage(
+      createdBooking.email_sent
+        ? `${text.bookingSuccess} A confirmation email has been sent to ${createdBooking.email}.`
+        : `${text.bookingSuccess} We could not send the confirmation email right now, but your booking was received.`
+    );
+    setBookingConfirmation({
+      ...createdBooking,
+      selected_packages: selectedPackageSnapshot,
+      estimated_total_usd: estimatedTotalUsd
+    });
     setSelectedPackageIds([]);
   };
 
@@ -577,10 +612,12 @@ function App() {
       </div>
       <div className="page-shell">
         <HeroSection hero={homeData?.hero} />
-        <MemoriesSection items={memories} />
+        <MemoriesSection items={memories} eyebrow={text.memoriesEyebrow} title={text.memoriesTitle} />
         <DestinationsSection
           id="destinations"
           title={text.destinations}
+          eyebrow={text.destinationsEyebrow}
+          lead={text.destinationsLead}
           items={destinations}
           currency={currency}
           priceLabel={text.priceFrom}
@@ -598,6 +635,7 @@ function App() {
           planningText={text.planningText}
           labels={text.form}
           message={bookingMessage}
+          confirmation={bookingConfirmation}
           onSubmit={submitBooking}
           selectedPackages={selectedPackages}
           currency={currency}

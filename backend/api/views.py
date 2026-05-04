@@ -1,6 +1,8 @@
 from datetime import date
 
+from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
+from django.core.mail import send_mail
 from django.db import DatabaseError
 from django.db.models import Count
 from django.utils.decorators import method_decorator
@@ -9,8 +11,14 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Booking, Destination, Memory, Review, VisitorLog
-from .serializers import BookingSerializer, DestinationSerializer, MemorySerializer, ReviewSerializer
+from .models import Booking, Destination, Memory, Review, SiteContent, VisitorLog
+from .serializers import (
+    BookingSerializer,
+    DestinationSerializer,
+    MemorySerializer,
+    ReviewSerializer,
+    SiteContentSerializer,
+)
 
 
 TRACKABLE_PATHS = {"/", "/admin"}
@@ -21,6 +29,7 @@ DESTINATION_SEED = [
         "region": "Central Eritrea",
         "description": "A modernist capital with palm-lined boulevards, Italian-era architecture, and an easy cafe rhythm.",
         "image_url": "/images/destinations/asmara.jpg",
+        "price_usd": 180,
         "highlights": "Fiat Tagliero, Cinema Impero, boulevard cafes, art deco walks",
         "travel_time": "2-3 days",
     },
@@ -29,6 +38,7 @@ DESTINATION_SEED = [
         "region": "Red Sea Coast",
         "description": "A sunlit port city of coral-stone buildings, island breezes, and unforgettable Red Sea views.",
         "image_url": "/images/destinations/massawa.jpg",
+        "price_usd": 240,
         "highlights": "Island promenade, Ottoman quarter, snorkeling, sea sunsets",
         "travel_time": "2 days",
     },
@@ -37,6 +47,7 @@ DESTINATION_SEED = [
         "region": "Anseba",
         "description": "A vibrant market town framed by rugged hills, camel caravans, and living Eritrean traditions.",
         "image_url": "/images/destinations/keren.jpg",
+        "price_usd": 160,
         "highlights": "Camel market, Mariam Dearit, mountain scenery, local crafts",
         "travel_time": "1-2 days",
     },
@@ -92,6 +103,8 @@ REVIEW_SEED = [
 
 
 def ensure_seed_data():
+    SiteContent.get_current()
+
     if not Destination.objects.exists():
         for item in DESTINATION_SEED:
             Destination.objects.create(**item)
@@ -119,18 +132,85 @@ def get_popular_interest():
         return []
 
 
+def format_selected_packages(selected_packages):
+    if not selected_packages:
+        return "No tour packages selected."
+
+    package_lines = []
+    for item in selected_packages:
+        name = str(item.get("name", "Tour package")).strip() or "Tour package"
+        region = str(item.get("region", "")).strip()
+        price_usd = item.get("price_usd")
+        details = []
+        if region:
+            details.append(region)
+        if price_usd not in [None, ""]:
+            details.append(f"${price_usd} per traveler")
+        package_lines.append(f"- {name}" + (f" ({', '.join(details)})" if details else ""))
+    return "\n".join(package_lines)
+
+
+def build_booking_email_body(booking, selected_packages, estimated_total_usd):
+    selected_package_text = format_selected_packages(selected_packages)
+    total_line = (
+        f"Estimated total: ${estimated_total_usd}"
+        if estimated_total_usd not in [None, ""]
+        else "Estimated total: To be confirmed"
+    )
+    extra_requests = booking.extra_requests.strip() or "No extra requests submitted."
+
+    return "\n".join(
+        [
+            f"Hi {booking.name},",
+            "",
+            "Thank you for your booking request with Lovely Eritrea. Here are the details we received:",
+            "",
+            f"Booking reference: #{booking.id}",
+            f"Name: {booking.name}",
+            f"Email: {booking.email}",
+            f"Country of origin: {booking.origin_country}",
+            f"Travel date: {booking.travel_date}",
+            f"Group size: {booking.group_size}",
+            f"Adults: {booking.adults}",
+            f"Children: {booking.children}",
+            f"Infants: {booking.infants}",
+            "",
+            "Selected tour packages:",
+            selected_package_text,
+            total_line,
+            "",
+            "Extra requests:",
+            extra_requests,
+            "",
+            "We will review your request and contact you with the next steps.",
+            "",
+            "Lovely Eritrea",
+        ]
+    )
+
+
+def send_booking_confirmation_email(booking, selected_packages, estimated_total_usd):
+    subject = f"Lovely Eritrea booking confirmation #{booking.id}"
+    message = build_booking_email_body(booking, selected_packages, estimated_total_usd)
+    send_mail(
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        [booking.email],
+        fail_silently=False,
+    )
+
+
 class HomeDataView(APIView):
     def get(self, request):
         ensure_seed_data()
-        destinations = DestinationSerializer(Destination.objects.all()[:3], many=True).data
-        memories = MemorySerializer(Memory.objects.all()[:3], many=True).data
+        destinations = DestinationSerializer(Destination.objects.prefetch_related("gallery_images").all(), many=True).data
+        memories = MemorySerializer(Memory.objects.all(), many=True).data
+        site_content = SiteContentSerializer(SiteContent.get_current()).data
         return Response(
             {
-                "hero": {
-                    "title": "Discover Eritrea",
-                    "subtitle": "Plan memorable cultural, coastal, and city adventures with a simple and welcoming guide.",
-                    "image_url": "/images/hero/hero.jpg",
-                },
+                "hero": site_content["hero"],
+                "copy": site_content["copy"],
                 "destinations": destinations,
                 "memories": memories,
                 "stats": {
@@ -145,7 +225,7 @@ class HomeDataView(APIView):
 class DestinationListView(APIView):
     def get(self, request):
         ensure_seed_data()
-        serializer = DestinationSerializer(Destination.objects.all(), many=True)
+        serializer = DestinationSerializer(Destination.objects.prefetch_related("gallery_images").all(), many=True)
         return Response(serializer.data)
 
 
@@ -184,7 +264,20 @@ class BookingCreateView(APIView):
         serializer = BookingSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         booking = serializer.save()
-        return Response(BookingSerializer(booking).data, status=status.HTTP_201_CREATED)
+        selected_packages = request.data.get("selected_packages", [])
+        if not isinstance(selected_packages, list):
+            selected_packages = []
+        estimated_total_usd = request.data.get("estimated_total_usd")
+
+        email_sent = True
+        try:
+            send_booking_confirmation_email(booking, selected_packages, estimated_total_usd)
+        except Exception:
+            email_sent = False
+
+        response_payload = BookingSerializer(booking).data
+        response_payload["email_sent"] = email_sent
+        return Response(response_payload, status=status.HTTP_201_CREATED)
 
 
 @method_decorator(csrf_exempt, name="dispatch")
