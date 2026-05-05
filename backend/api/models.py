@@ -1,4 +1,26 @@
 from django.db import models
+from django.core.exceptions import ValidationError
+
+
+ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
+ALLOWED_IMAGE_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
+MAX_IMAGE_SIZE = 5 * 1024 * 1024
+
+
+def validate_uploaded_image(uploaded_file):
+    if not uploaded_file:
+        return
+
+    filename = uploaded_file.name.lower()
+    if not any(filename.endswith(extension) for extension in ALLOWED_IMAGE_EXTENSIONS):
+        raise ValidationError("Upload a JPG, PNG, or WebP image.")
+
+    content_type = getattr(uploaded_file, "content_type", "")
+    if content_type and content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
+        raise ValidationError("Upload a valid JPG, PNG, or WebP image.")
+
+    if uploaded_file.size > MAX_IMAGE_SIZE:
+        raise ValidationError("Image files must be 5 MB or smaller.")
 
 
 class SiteContent(models.Model):
@@ -9,7 +31,7 @@ class SiteContent(models.Model):
     hero_kicker = models.CharField(max_length=160, default="Explore East Africa's hidden coastal jewel")
     hero_primary_button = models.CharField(max_length=80, default="Start Planning")
     hero_secondary_button = models.CharField(max_length=80, default="View Tour Packages")
-    hero_image = models.FileField(upload_to="site/hero/", blank=True)
+    hero_image = models.FileField(upload_to="site/hero/", blank=True, validators=[validate_uploaded_image])
     hero_image_url = models.CharField(
         max_length=255,
         default="/images/hero/hero.jpg",
@@ -78,7 +100,7 @@ class Destination(models.Model):
     name = models.CharField(max_length=120)
     region = models.CharField(max_length=120)
     description = models.TextField()
-    image = models.FileField(upload_to="destinations/", blank=True)
+    image = models.FileField(upload_to="destinations/", blank=True, validators=[validate_uploaded_image])
     image_url = models.CharField(max_length=255, help_text="Use a relative path like /images/destinations/asmara.jpg")
     price_usd = models.PositiveIntegerField(default=150, help_text="Base price per traveler in USD.")
     highlights = models.TextField(help_text="Comma-separated highlight list")
@@ -94,7 +116,7 @@ class Destination(models.Model):
 
 class DestinationGalleryImage(models.Model):
     destination = models.ForeignKey(Destination, related_name="gallery_images", on_delete=models.CASCADE)
-    image = models.FileField(upload_to="destination-galleries/", blank=True)
+    image = models.FileField(upload_to="destination-galleries/", blank=True, validators=[validate_uploaded_image])
     image_url = models.CharField(
         max_length=255,
         blank=True,
@@ -114,7 +136,7 @@ class Memory(models.Model):
     title = models.CharField(max_length=120)
     location = models.CharField(max_length=120)
     description = models.TextField()
-    image = models.FileField(upload_to="memories/", blank=True)
+    image = models.FileField(upload_to="memories/", blank=True, validators=[validate_uploaded_image])
     image_url = models.CharField(max_length=255, help_text="Use a relative path like /images/memories/one.jpg")
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -276,6 +276,21 @@ function extractApiError(payload, fallbackMessage) {
   return fallbackMessage;
 }
 
+function getCookie(name) {
+  const cookie = document.cookie
+    .split(";")
+    .map((item) => item.trim())
+    .find((item) => item.startsWith(`${name}=`));
+  return cookie ? decodeURIComponent(cookie.slice(name.length + 1)) : "";
+}
+
+async function ensureCsrfToken() {
+  await fetch(API_BASE + "/csrf/", {
+    credentials: "include"
+  });
+  return getCookie("csrftoken");
+}
+
 const copy = {
   home: "Home",
   destinations: "Top Tour Packages",
@@ -467,10 +482,6 @@ function App() {
     setBookingMessage("");
     setBookingConfirmation(null);
 
-    const packageSummary = selectedPackages.length
-      ? `Selected tour packages: ${selectedPackages.map((item) => item.name).join(", ")}.`
-      : "Selected tour packages: none specified.";
-    const extraRequests = [packageSummary, formData.extra_requests].filter(Boolean).join("\n\n");
     const selectedPackageSnapshot = selectedPackages.map((item) => ({
       id: item.id,
       name: item.name,
@@ -488,9 +499,7 @@ function App() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...formData,
-        extra_requests: extraRequests,
-        selected_packages: selectedPackageSnapshot,
-        estimated_total_usd: estimatedTotalUsd
+        selected_package_ids: selectedPackageSnapshot.map((item) => item.id)
       })
     });
 
@@ -507,8 +516,8 @@ function App() {
     );
     setBookingConfirmation({
       ...createdBooking,
-      selected_packages: selectedPackageSnapshot,
-      estimated_total_usd: estimatedTotalUsd
+      selected_packages: createdBooking.selected_packages || selectedPackageSnapshot,
+      estimated_total_usd: createdBooking.estimated_total_usd ?? estimatedTotalUsd
     });
     setSelectedPackageIds([]);
   };
@@ -544,10 +553,11 @@ function App() {
     setLoginError("");
 
     try {
+      const csrfToken = await ensureCsrfToken();
       const response = await fetch(API_BASE + "/admin-login/", {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
         body: JSON.stringify(loginForm)
       });
 
@@ -580,9 +590,11 @@ function App() {
   };
 
   const handleLogout = async () => {
+    const csrfToken = await ensureCsrfToken();
     await fetch(API_BASE + "/admin-logout/", {
       method: "POST",
-      credentials: "include"
+      credentials: "include",
+      headers: { "X-CSRFToken": csrfToken }
     }).catch(() => undefined);
 
     setDashboardData(null);

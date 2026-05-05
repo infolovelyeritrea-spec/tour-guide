@@ -6,6 +6,7 @@ from django.core.mail import send_mail
 from django.db import DatabaseError
 from django.db.models import Count
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.response import Response
@@ -201,6 +202,54 @@ def send_booking_confirmation_email(booking, selected_packages, estimated_total_
     )
 
 
+def get_selected_packages_from_request(request):
+    selected_ids = request.data.get("selected_package_ids", [])
+    if not isinstance(selected_ids, list):
+        return []
+
+    safe_ids = []
+    for package_id in selected_ids:
+        try:
+            safe_ids.append(int(package_id))
+        except (TypeError, ValueError):
+            continue
+
+    destinations = Destination.objects.filter(id__in=safe_ids)
+    package_map = {destination.id: destination for destination in destinations}
+    return [package_map[package_id] for package_id in safe_ids if package_id in package_map]
+
+
+def serialize_selected_packages(packages):
+    return [
+        {
+            "id": package.id,
+            "name": package.name,
+            "region": package.region,
+            "price_usd": package.price_usd,
+        }
+        for package in packages
+    ]
+
+
+def build_extra_requests(user_note, selected_packages):
+    package_summary = (
+        f"Selected tour packages: {', '.join(package.name for package in selected_packages)}."
+        if selected_packages
+        else "Selected tour packages: none specified."
+    )
+    return "\n\n".join([item for item in [package_summary, user_note.strip()] if item])
+
+
+@method_decorator(ensure_csrf_cookie, name="dispatch")
+class CsrfTokenView(APIView):
+    authentication_classes = []
+    permission_classes = []
+    throttle_scope = "admin_login"
+
+    def get(self, request):
+        return Response({"message": "CSRF cookie set."})
+
+
 class HomeDataView(APIView):
     def get(self, request):
         ensure_seed_data()
@@ -248,6 +297,7 @@ class ReviewListView(APIView):
 class ReviewCreateView(APIView):
     authentication_classes = []
     permission_classes = []
+    throttle_scope = "review"
 
     def post(self, request):
         serializer = ReviewSerializer(data=request.data)
@@ -260,24 +310,33 @@ class ReviewCreateView(APIView):
 class BookingCreateView(APIView):
     authentication_classes = []
     permission_classes = []
+    throttle_scope = "booking"
 
     def post(self, request):
         serializer = BookingSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        booking = serializer.save()
-        selected_packages = request.data.get("selected_packages", [])
-        if not isinstance(selected_packages, list):
-            selected_packages = []
-        estimated_total_usd = request.data.get("estimated_total_usd")
+        selected_packages = get_selected_packages_from_request(request)
+        selected_package_payload = serialize_selected_packages(selected_packages)
+        estimated_total_usd = sum(package.price_usd for package in selected_packages) * serializer.validated_data[
+            "group_size"
+        ]
+        booking = serializer.save(
+            extra_requests=build_extra_requests(
+                serializer.validated_data.get("extra_requests", ""),
+                selected_packages,
+            )
+        )
 
         email_sent = True
         try:
-            send_booking_confirmation_email(booking, selected_packages, estimated_total_usd)
+            send_booking_confirmation_email(booking, selected_package_payload, estimated_total_usd)
         except Exception:
             email_sent = False
 
         response_payload = BookingSerializer(booking).data
         response_payload["email_sent"] = email_sent
+        response_payload["selected_packages"] = selected_package_payload
+        response_payload["estimated_total_usd"] = estimated_total_usd
         return Response(response_payload, status=status.HTTP_201_CREATED)
 
 
@@ -303,10 +362,10 @@ class TrackVisitorView(APIView):
         return Response({"message": "Visitor tracked."}, status=status.HTTP_201_CREATED)
 
 
-@method_decorator(csrf_exempt, name="dispatch")
 class AdminLoginView(APIView):
     authentication_classes = []
     permission_classes = []
+    throttle_scope = "admin_login"
 
     def post(self, request):
         username = request.data.get("username", "").strip()
@@ -320,12 +379,11 @@ class AdminLoginView(APIView):
         return Response({"message": "Login successful.", "username": user.username})
 
 
-@method_decorator(csrf_exempt, name="dispatch")
 class AdminLogoutView(APIView):
-    authentication_classes = []
-    permission_classes = []
-
     def post(self, request):
+        if not request.user.is_authenticated or not request.user.is_staff:
+            return Response({"detail": "Authentication required."}, status=status.HTTP_401_UNAUTHORIZED)
+
         logout(request)
         return Response({"message": "Logout successful."})
 
