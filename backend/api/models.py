@@ -1,26 +1,38 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from PIL import Image, UnidentifiedImageError
+
+from .image_processing import optimize_uploaded_tour_package_image
 
 
-ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
-ALLOWED_IMAGE_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
-MAX_IMAGE_SIZE = 5 * 1024 * 1024
+MAX_IMAGE_SIZE = 25 * 1024 * 1024
 
 
 def validate_uploaded_image(uploaded_file):
     if not uploaded_file:
         return
 
-    filename = uploaded_file.name.lower()
-    if not any(filename.endswith(extension) for extension in ALLOWED_IMAGE_EXTENSIONS):
-        raise ValidationError("Upload a JPG, PNG, or WebP image.")
-
     content_type = getattr(uploaded_file, "content_type", "")
-    if content_type and content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
-        raise ValidationError("Upload a valid JPG, PNG, or WebP image.")
+    if content_type and not content_type.lower().startswith("image/"):
+        raise ValidationError("Upload a valid image file.")
 
     if uploaded_file.size > MAX_IMAGE_SIZE:
         raise ValidationError("Image files must be 5 MB or smaller.")
+
+    try:
+        uploaded_file.seek(0)
+        with Image.open(uploaded_file) as image:
+            image.verify()
+    except (OSError, UnidentifiedImageError):
+        raise ValidationError("Upload a valid image file.")
+    finally:
+        uploaded_file.seek(0)
+
+
+def optimize_unsaved_tour_package_image(instance, field_name):
+    image_field = getattr(instance, field_name)
+    if image_field and not getattr(image_field, "_committed", True):
+        setattr(instance, field_name, optimize_uploaded_tour_package_image(image_field))
 
 
 class SiteContent(models.Model):
@@ -113,6 +125,10 @@ class Destination(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        optimize_unsaved_tour_package_image(self, "image")
+        super().save(*args, **kwargs)
+
 
 class DestinationGalleryImage(models.Model):
     destination = models.ForeignKey(Destination, related_name="gallery_images", on_delete=models.CASCADE)
@@ -130,6 +146,10 @@ class DestinationGalleryImage(models.Model):
 
     def __str__(self):
         return self.alt_text or f"{self.destination.name} gallery image"
+
+    def save(self, *args, **kwargs):
+        optimize_unsaved_tour_package_image(self, "image")
+        super().save(*args, **kwargs)
 
 
 class Memory(models.Model):

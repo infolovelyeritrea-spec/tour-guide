@@ -1,59 +1,82 @@
 # Eritrea Tour Guide
 
-A full-stack tourism website for Eritrea with a React frontend, Django REST API backend, booking workflow, visitor analytics, public reviews, and an admin dashboard.
+A full-stack tourism website for Eritrea with a React frontend, Django REST API backend, booking workflow, public reviews, visitor analytics, Django admin content management, and an admin dashboard.
 
-## Local setup
+## Quick Start
 
 ### Backend
 
-```bash
-cd backend
+```powershell
+cd "D:\2026 Projects\Tour Guide\backend"
+.\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 python manage.py check
 python manage.py migrate
-python manage.py runserver
+python manage.py runserver 127.0.0.1:8000
 ```
 
-Create a `backend/.env` file from `backend/.env.example` and set the PostgreSQL connection values before running migrations.
+If the virtual environment does not exist yet:
+
+```powershell
+cd "D:\2026 Projects\Tour Guide\backend"
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
 
 ### Frontend
 
-```bash
-cd frontend
+Open a second terminal:
+
+```powershell
+cd "D:\2026 Projects\Tour Guide\frontend"
 npm install
 npm run dev
 ```
 
-## Production-ready environment variables
+Local URLs:
 
-Create a `.env` file in `backend/` based on `backend/.env.example`.
+- Public site: `http://localhost:5173`
+- Django API/admin: `http://127.0.0.1:8000`
+- Django admin: `http://127.0.0.1:8000/admin/`
+- React admin dashboard: `http://localhost:5173/admin`
 
-Required for production:
+## Documentation
 
-- `DJANGO_DEBUG=False`
-- `DJANGO_SECRET_KEY=<strong-secret-key>`
-- `DJANGO_ALLOWED_HOSTS=<your-domain>,<your-server-host>`
-- `DJANGO_CORS_ALLOWED_ORIGINS=https://<your-frontend-domain>`
-- `DJANGO_CSRF_TRUSTED_ORIGINS=https://<your-frontend-domain>`
-- `DJANGO_DB_NAME=<postgres-database-name>`
-- `DJANGO_DB_USER=<postgres-user>`
-- `DJANGO_DB_PASSWORD=<postgres-password>`
-- `DJANGO_DB_HOST=<postgres-host>`
-- `DJANGO_DB_PORT=5432`
+Full project documentation is available at [docs/APP_DOCUMENTATION.md](docs/APP_DOCUMENTATION.md).
 
-## Deployment notes
+It covers:
 
-- PostgreSQL is the only supported application database backend
-- Create the PostgreSQL database and user before running `python manage.py migrate`
-- Build the frontend with `npm run build`
-- Apply database migrations with `python manage.py migrate`
-- Collect static files with `python manage.py collectstatic`
-- Serve Django behind HTTPS in production
+- Project architecture
+- Local development setup
+- Environment variables
+- Backend models and API endpoints
+- Admin panel workflows
+- Image upload optimization
+- Image resize script usage
+- Frontend behavior
+- Deployment notes
+- Troubleshooting
 
-## Core features
+## Common Commands
 
-- Public homepage with hero, memories, tour packages, booking, reviews, and footer sections
-- Booking form with tour-package selection and pricing summary
-- Public traveler reviews and comments
-- Admin login and dashboard for bookings, visitors, traffic, reviews, and selected-tour insights
-- Responsive layout for desktop and mobile
+```powershell
+# Backend checks
+cd backend
+python manage.py check
+python manage.py migrate
+
+# Frontend build
+cd frontend
+npm run build
+
+# Resize existing tour package images
+cd "D:\2026 Projects\Tour Guide"
+.\backend\.venv\Scripts\python.exe scripts\resize_images.py frontend\public\images\tour-packages --recursive --preset tour-package
+```
+
+## Notes
+
+- Destination and destination gallery images uploaded through Django admin are automatically converted to WebP, resized/cropped to `1200x740`, and compressed.
+- Admin uploads accept common image formats including JPG, PNG, WebP, HEIC, and HEIF, as long as the backend image libraries can decode them.
+- The current upload limit is `25 MB` per image.

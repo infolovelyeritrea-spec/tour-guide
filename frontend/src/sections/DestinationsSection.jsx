@@ -56,7 +56,7 @@ function PackageCard({
           <h3>{item.name}</h3>
           <span className="package-region-pill">{item.region}</span>
         </div>
-        <p className="tour-price">{priceLabel}: {formatPrice(currency, item.price_usd || 150)}</p>
+        <p className="tour-price">{priceLabel}: {formatPrice(currency, item.price_usd ?? 150)}</p>
         <p>{item.description}</p>
         <div className="tag-row">
           {item.highlights?.map((highlight) => (

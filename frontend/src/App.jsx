@@ -22,12 +22,9 @@ const currencies = ["USD", "ERN", "EUR", "GBP"];
 let lastTrackedPath = null;
 
 const packageBasePricesUsd = {
-  asmara: 180,
-  massawa: 240,
-  keren: 160,
-  dahlak: 320,
-  senafe: 210,
-  "gash-barka": 260
+  asmara: 0,
+  massawa: 0,
+  keren: 0,
 };
 
 const fallbackDestinations = [
@@ -37,7 +34,7 @@ const fallbackDestinations = [
     region: "Central Eritrea",
     description:
       "A modernist capital with palm-lined boulevards, Italian-era architecture, and an easy cafe rhythm.",
-    image_url: "/images/destinations/asmara.jpg",
+    image_url: "/images/destinations/asmara.webp",
     highlights: ["Fiat Tagliero", "Cinema Impero", "boulevard cafes", "art deco walks"],
     travel_time: "2-3 days"
   },
@@ -47,7 +44,7 @@ const fallbackDestinations = [
     region: "Red Sea Coast",
     description:
       "A sunlit port city of coral-stone buildings, island breezes, and unforgettable Red Sea views.",
-    image_url: "/images/destinations/massawa.jpg",
+    image_url: "/images/destinations/massawa.webp",
     highlights: ["Island promenade", "Ottoman quarter", "snorkeling", "sea sunsets"],
     travel_time: "2 days"
   },
@@ -57,44 +54,13 @@ const fallbackDestinations = [
     region: "Anseba",
     description:
       "A vibrant market town framed by rugged hills, camel caravans, and living Eritrean traditions.",
-    image_url: "/images/destinations/keren.jpg",
+    image_url: "/images/destinations/keren.webp",
     highlights: ["Camel market", "Mariam Dearit", "mountain scenery", "local crafts"],
     travel_time: "1-2 days"
   }
 ];
 
-const additionalFallbackPackages = [
-  {
-    id: "dahlak",
-    name: "Dahlak Islands",
-    region: "Red Sea Archipelago",
-    description:
-      "A laid-back island escape with clear water, snorkeling stops, and boat days that feel far from everything.",
-    image_url: "/images/destinations/massawa.jpg",
-    highlights: ["Boat transfer", "reef snorkeling", "island picnic", "sunset cruise"],
-    travel_time: "3 days"
-  },
-  {
-    id: "senafe",
-    name: "Senafe Highlands",
-    region: "Southern Highlands",
-    description:
-      "A cooler mountain route with dramatic views, village life, and historical landscapes around Metera.",
-    image_url: "/images/destinations/keren.jpg",
-    highlights: ["Metera ruins", "highland drives", "village stops", "scenic hikes"],
-    travel_time: "2 days"
-  },
-  {
-    id: "gash-barka",
-    name: "Gash-Barka Discovery",
-    region: "Western Eritrea",
-    description:
-      "A slower overland package centered on open landscapes, cultural encounters, and a broader regional story.",
-    image_url: "/images/destinations/asmara.jpg",
-    highlights: ["regional culture", "farm landscapes", "day excursions", "custom pacing"],
-    travel_time: "3-4 days"
-  }
-];
+const additionalFallbackPackages = [];
 
 const fallbackMemories = [
   {
@@ -103,15 +69,7 @@ const fallbackMemories = [
     location: "Asmara",
     description:
       "Golden light across art deco facades, coffee aromas, and calm streets make the city unforgettable.",
-    image_url: "/images/memories/one.jpg"
-  },
-  {
-    id: "memory-2",
-    title: "Red Sea Escape",
-    location: "Massawa",
-    description:
-      "Historic piers, turquoise water, and warm sea air turn every afternoon into a postcard memory.",
-    image_url: "/images/memories/two.jpg"
+    image_url: "/images/memories/one.webp"
   },
   {
     id: "memory-3",
@@ -119,7 +77,16 @@ const fallbackMemories = [
     location: "Keren",
     description:
       "Colorful textiles, lively stalls, and community spirit create a deeply local travel experience.",
-    image_url: "/images/memories/three.jpg"
+    image_url: "/images/memories/two.webp"
+  },
+  
+  {
+    id: "memory-2",
+    title: "Red Sea Escape",
+    location: "Massawa",
+    description:
+      "Historic piers, turquoise water, and warm sea air turn every afternoon into a postcard memory.",
+    image_url: "/images/memories/three.webp"
   }
 ];
 
