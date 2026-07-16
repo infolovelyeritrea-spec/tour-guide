@@ -136,8 +136,8 @@ const fallbackHomeData = {
     image_url: "/images/hero/hero.jpg"
   },
   social_links: [
-    { name: "WhatsApp", href: "https://wa.me/2911123456", detail: "+291 1 123 456", icon: "whatsapp" },
-    { name: "Instagram", href: "https://instagram.com/lovelyeritrea", detail: "@lovelyeritrea", icon: "instagram" },
+    { name: "WhatsApp", href: "https://wa.me/2917358806", detail: "+291 7 358806", icon: "whatsapp" },
+    { name: "Instagram", href: "https://instagram.com/lovelyeritrea", detail: "lovelyeritrea", icon: "instagram" },
     { name: "Facebook", href: "https://facebook.com/lovelyeritrea", detail: "Lovely Eritrea", icon: "facebook" }
   ],
   destinations: fallbackDestinations,
@@ -289,8 +289,8 @@ const copy = {
     "We help curious travelers explore Eritrea through welcoming city stays, Red Sea escapes, and cultural day tours with clear booking support.",
   contactTitle: "Contact Information",
   contactDetails: [
-    "Phone: +291 1 123 456",
-    "Email: hello@eritreatourguide.com",
+    "Phone: +291 7358806",
+    "Email: infolovelyeritrea@gmail.com",
     "Address: Harnet Avenue, Asmara, Eritrea"
   ],
   bookingTitle: "Plan and Book Your Tour",

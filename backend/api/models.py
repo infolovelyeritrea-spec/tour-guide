@@ -80,7 +80,7 @@ class SiteContent(models.Model):
     )
     contact_title = models.CharField(max_length=160, default="Contact Information")
     contact_details = models.TextField(
-        default="Phone: +291 1 123 456\nEmail: hello@eritreatourguide.com\nAddress: Harnet Avenue, Asmara, Eritrea",
+        default="Phone: +291 7358806\nEmail: infolovelyeritrea@gmail.com\nAddress: Harnet Avenue, Asmara, Eritrea",
         help_text="One contact detail per line.",
     )
     whatsapp_url = models.CharField(max_length=255, default="https://wa.me/2911123456", blank=True)

@@ -11,12 +11,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="sitecontent",
             name="whatsapp_url",
-            field=models.CharField(blank=True, default="https://wa.me/2911123456", max_length=255),
+            field=models.CharField(blank=True, default="https://wa.me/2917358806", max_length=255),
         ),
         migrations.AddField(
             model_name="sitecontent",
             name="whatsapp_detail",
-            field=models.CharField(blank=True, default="+291 1 123 456", max_length=120),
+            field=models.CharField(blank=True, default="+2917358806", max_length=120),
         ),
         migrations.AddField(
             model_name="sitecontent",
@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="sitecontent",
             name="instagram_detail",
-            field=models.CharField(blank=True, default="@lovelyeritrea", max_length=120),
+            field=models.CharField(blank=True, default="lovelyeritrea", max_length=120),
         ),
         migrations.AddField(
             model_name="sitecontent",

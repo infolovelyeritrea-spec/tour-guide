@@ -17,8 +17,8 @@ const socialIcons = {
 };
 
 const fallbackSocialLinks = [
-  { name: "WhatsApp", href: "https://wa.me/2911123456", icon: "whatsapp", detail: "+291 1 123 456" },
-  { name: "Instagram", href: "https://instagram.com/lovelyeritrea", icon: "instagram", detail: "@lovelyeritrea" },
+  { name: "WhatsApp", href: "https://wa.me/2917358806", icon: "whatsapp", detail: "+2917358806" },
+  { name: "Instagram", href: "https://instagram.com/lovelyeritrea", icon: "instagram", detail: "Lovely Eritrea" },
   { name: "Facebook", href: "https://facebook.com/lovelyeritrea", icon: "facebook", detail: "Lovely Eritrea" }
 ];
 
