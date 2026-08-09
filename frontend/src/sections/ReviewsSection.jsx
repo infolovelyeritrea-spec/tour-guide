@@ -24,7 +24,7 @@ function formatReviewDate(value) {
   });
 }
 
-function ReviewsSection({ id, title, subtitle, labels, reviews, message, onSubmit }) {
+function ReviewsSection({ id, title, subtitle, labels, reviews, message, onSubmit, t }) {
   const [form, setForm] = useState({
     name: "",
     origin_country: "",
@@ -85,7 +85,7 @@ function ReviewsSection({ id, title, subtitle, labels, reviews, message, onSubmi
   return (
     <section className="content-section reviews-section" id={id}>
       <div className="section-heading">
-        <p className="eyebrow">Reviews</p>
+        <p className="eyebrow">{t.reviewsEyebrow}</p>
         <h2>{title}</h2>
         <p className="muted reviews-lead">{subtitle}</p>
       </div>
@@ -116,7 +116,7 @@ function ReviewsSection({ id, title, subtitle, labels, reviews, message, onSubmi
                 </article>
               ))
             ) : (
-              <p className="dashboard-empty">No reviews yet. Be the first traveler to share one.</p>
+              <p className="dashboard-empty">{t.reviewsEmptyLabel}</p>
             )}
           </div>
           {sortedReviews.length > INITIAL_REVIEW_COUNT ? (
@@ -126,7 +126,7 @@ function ReviewsSection({ id, title, subtitle, labels, reviews, message, onSubmi
                 className="more-reviews-button"
                 onClick={() => setShowAllReviews((current) => !current)}
               >
-                {showAllReviews ? "Show fewer reviews" : "Show more reviews"}
+                {showAllReviews ? t.reviewsShowFewerLabel : t.reviewsShowMoreLabel}
               </button>
             </div>
           ) : null}

@@ -7,6 +7,7 @@ import FooterSection from "./sections/FooterSection";
 import HeroSection from "./sections/HeroSection";
 import MemoriesSection from "./sections/MemoriesSection";
 import ReviewsSection from "./sections/ReviewsSection";
+import { defaultLanguage, languages, translations } from "./translations";
 
 const API_BASE =
   (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE_URL?.trim()) || "/api";
@@ -19,6 +20,7 @@ const PUBLIC_SITE_URL =
 const IMAGE_BASE_URL =
   (typeof import.meta !== "undefined" && import.meta.env?.VITE_IMAGE_BASE_URL?.trim()) || PUBLIC_SITE_URL;
 const currencies = ["USD", "ERN", "EUR", "GBP"];
+const LANGUAGE_STORAGE_KEY = "site-language";
 let lastTrackedPath = null;
 
 const packageBasePricesUsd = {
@@ -258,82 +260,18 @@ async function ensureCsrfToken() {
   return getCookie("csrftoken");
 }
 
-const copy = {
-  home: "Home",
-  destinations: "Top Tour Packages",
-  about: "About",
-  currency: "Currency",
-  priceFrom: "From",
-  destinationsViewMore: "View more tour packages",
-  destinationsViewLess: "Show fewer packages",
-  destinationsEyebrow: "Tour Packages",
-  destinationsLead:
-    "Compare curated Eritrea experiences, add your favorites to cart, and carry them straight into booking.",
-  memoriesEyebrow: "Recent Memories",
-  memoriesTitle: "Moments Travelers Love Across Eritrea",
-  addToCart: "Add to cart",
-  removeFromCart: "Remove",
-  bookingCartTitle: "Selected tour packages",
-  bookingCartSubtitle: "Review your tour picks before sending your booking.",
-  bookingCartEmpty: "No tour packages selected yet. Add packages above to see them here before booking.",
-  estimatedTotal: "Estimated total",
-  basePrice: "Base price",
-  perTraveler: "per traveler",
-  totalTravelers: "Travelers",
-  packageCount: "Packages",
-  planningTitle: "Build your Eritrea itinerary",
-  planningText:
-    "Pick the tour packages you want, review the live estimate, and complete one simple booking form for your preferred travel dates.",
-  aboutTitle: "About Lovely Eritrea",
-  aboutText:
-    "We help curious travelers explore Eritrea through welcoming city stays, Red Sea escapes, and cultural day tours with clear booking support.",
-  contactTitle: "Contact Information",
-  contactDetails: [
-    "Phone: +291 7358806",
-    "Email: infolovelyeritrea@gmail.com",
-    "Address: Harnet Avenue, Asmara, Eritrea"
-  ],
-  bookingTitle: "Plan and Book Your Tour",
-  bookingSuccess: "Your booking has been sent successfully.",
-  reviewsTitle: "Traveler Reviews & Comments",
-  reviewsSubtitle:
-    "Read recent feedback from visitors, then leave your own short review to help future travelers plan with confidence.",
-  reviewSuccess: "Your review has been shared successfully.",
-  form: {
-    name: "Full name",
-    email: "Email address",
-    origin: "Country of origin",
-    groupSize: "Number of people",
-    adults: "Adults",
-    children: "Children",
-    infants: "Infants",
-    date: "Travel date",
-    extra: "Extra tour requests",
-    submit: "Reserve My Tour",
-    groupMismatch: "Total people must equal adults + children + infants.",
-    submitError: "We could not send your booking right now.",
-    packageNote: "Selected packages will be included with your booking request."
-  },
-  reviewsForm: {
-    formTitle: "Share your experience",
-    formSubtitle: "A few thoughtful details help other travelers know what to expect.",
-    displayTitle: "What visitors are saying",
-    name: "Your name",
-    origin: "Country of origin",
-    tripType: "Trip type",
-    rating: "Rating",
-    title: "Review title",
-    titlePlaceholder: "What stood out most?",
-    comment: "Comment",
-    commentPlaceholder: "Share a short review about the planning, guides, pacing, destinations, or overall experience.",
-    submit: "Post Review",
-    submitting: "Posting...",
-    submitError: "We could not share your review right now."
+function getStoredLanguage() {
+  try {
+    const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    return stored && translations[stored] ? stored : defaultLanguage;
+  } catch {
+    return defaultLanguage;
   }
-};
+}
 
 function App() {
   const [currency, setCurrency] = useState("USD");
+  const [language, setLanguage] = useState(getStoredLanguage);
   const [homeData, setHomeData] = useState(() => normalizeHomeData(fallbackHomeData));
   const [destinations, setDestinations] = useState(() => normalizeHomeData(fallbackHomeData).destinations);
   const [memories, setMemories] = useState(() => normalizeHomeData(fallbackHomeData).memories);
@@ -348,7 +286,7 @@ function App() {
   const [loginError, setLoginError] = useState("");
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
 
-  const text = useMemo(() => ({ ...copy, ...(homeData?.copy || {}) }), [homeData]);
+  const text = useMemo(() => translations[language] || translations[defaultLanguage], [language]);
   const pathname = window.location.pathname;
   const isAdmin = pathname === ADMIN_PATH;
 
@@ -356,6 +294,14 @@ function App() {
     () => destinations.filter((item) => selectedPackageIds.includes(item.id)),
     [destinations, selectedPackageIds]
   );
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+    } catch {
+      // Ignore storage failures (e.g. private browsing) - language just won't persist.
+    }
+  }, [language]);
 
   useEffect(() => {
     if (lastTrackedPath === pathname) {
@@ -592,12 +538,23 @@ function App() {
           currency={currency}
           currencies={currencies}
           onCurrencyChange={setCurrency}
+          language={language}
+          languages={languages}
+          onLanguageChange={setLanguage}
           logoUrl={`${IMAGE_BASE_URL}/images/logo/logo.png`}
-          socialLinks={homeData.social_links}
         />
       </div>
       <div className="page-shell">
-        <HeroSection hero={homeData?.hero} />
+        <HeroSection
+          hero={{
+            image_url: homeData?.hero?.image_url,
+            kicker: text.heroKicker,
+            title: text.heroTitle,
+            subtitle: text.heroSubtitle,
+            primary_button: text.heroPrimaryButton,
+            secondary_button: text.heroSecondaryButton
+          }}
+        />
         <MemoriesSection items={memories} eyebrow={text.memoriesEyebrow} title={text.memoriesTitle} />
         <DestinationsSection
           id="destinations"
@@ -613,6 +570,7 @@ function App() {
           viewLessLabel={text.destinationsViewLess}
           selectedPackageIds={selectedPackageIds}
           onTogglePackage={togglePackageSelection}
+          t={text}
         />
         <BookingSection
           id="booking"
@@ -633,6 +591,7 @@ function App() {
           perTravelerLabel={text.perTraveler}
           totalTravelersLabel={text.totalTravelers}
           packageCountLabel={text.packageCount}
+          t={text}
         />
         <ReviewsSection
           id="reviews"
@@ -642,6 +601,7 @@ function App() {
           reviews={reviews}
           message={reviewMessage}
           onSubmit={submitReview}
+          t={text}
         />
         <FooterSection
           id="about"
@@ -650,6 +610,7 @@ function App() {
           contactTitle={text.contactTitle}
           contactDetails={text.contactDetails}
           socialLinks={homeData.social_links}
+          t={text}
         />
       </div>
     </>

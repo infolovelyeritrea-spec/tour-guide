@@ -4,6 +4,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 HAS_WHITENOISE = find_spec("whitenoise") is not None
+FRONTEND_BUILD_DIR = BASE_DIR / "frontend_build"
 
 
 def load_env_file(path):
@@ -83,7 +84,7 @@ ROOT_URLCONF = "backend.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [FRONTEND_BUILD_DIR],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -154,6 +155,11 @@ if HAS_WHITENOISE:
             "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
         }
     }
+    if FRONTEND_BUILD_DIR.exists():
+        # Serves the built frontend's assets/, images/, etc. directly at the
+        # site root (not under /static/) since the app references them with
+        # root-absolute paths like /images/destinations/asmara.webp.
+        WHITENOISE_ROOT = FRONTEND_BUILD_DIR
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

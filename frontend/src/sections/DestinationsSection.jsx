@@ -22,7 +22,8 @@ function PackageCard({
   isSelected,
   isGalleryActive,
   onTogglePackage,
-  onShowGallery
+  onShowGallery,
+  t
 }) {
   const previewImages = item.galleryImages?.slice(0, 4) || [item.image_url];
   const mainImage = previewImages[0] || item.image_url;
@@ -34,7 +35,7 @@ function PackageCard({
         type="button"
         className={`package-image-button${isGalleryActive ? " is-active" : ""}`}
         onClick={() => onShowGallery(item.id)}
-        aria-label={`View ${item.name} gallery`}
+        aria-label={t.galleryViewAriaLabelTemplate.replace("{name}", item.name)}
       >
         <div className="package-image-mosaic">
           <div className="package-image-main">
@@ -48,7 +49,7 @@ function PackageCard({
             ))}
           </div>
           <span className="package-duration-badge">{item.travel_time}</span>
-          <span className="package-gallery-pill">View gallery</span>
+          <span className="package-gallery-pill">{t.galleryViewLabel}</span>
         </div>
       </button>
       <div className="tour-card-body package-card-body">
@@ -88,7 +89,8 @@ function DestinationsSection({
   viewMoreLabel,
   viewLessLabel,
   selectedPackageIds,
-  onTogglePackage
+  onTogglePackage,
+  t
 }) {
   const [showAllPackages, setShowAllPackages] = useState(false);
   const [activeGalleryId, setActiveGalleryId] = useState(null);
@@ -158,6 +160,7 @@ function DestinationsSection({
             isGalleryActive={activeGalleryPackage?.id === item.id}
             onTogglePackage={onTogglePackage}
             onShowGallery={handleShowGallery}
+            t={t}
           />
         ))}
       </div>
@@ -176,6 +179,7 @@ function DestinationsSection({
               isGalleryActive={activeGalleryPackage?.id === item.id}
               onTogglePackage={onTogglePackage}
               onShowGallery={handleShowGallery}
+              t={t}
             />
           ))}
         </div>
@@ -199,20 +203,20 @@ function DestinationsSection({
             type="button"
             className="package-gallery-backdrop"
             onClick={handleCloseGallery}
-            aria-label="Close package gallery"
+            aria-label={t.galleryCloseAriaLabel}
           />
           <div className="package-gallery-dialog">
             <button
               type="button"
               className="package-gallery-close"
               onClick={handleCloseGallery}
-              aria-label="Close package gallery"
+              aria-label={t.galleryCloseAriaLabel}
             >
               {"\u00d7"}
             </button>
             <div className="package-gallery-showcase">
               <div className="package-gallery-copy">
-                <p className="eyebrow">Package Gallery</p>
+                <p className="eyebrow">{t.galleryEyebrow}</p>
                 <h3 id="package-gallery-title">{activeGalleryPackage.name}</h3>
                 <p>
                   {activeGalleryPackage.description}

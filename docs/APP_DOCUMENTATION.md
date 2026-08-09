@@ -161,9 +161,8 @@ Required production values:
 ```env
 DJANGO_DEBUG=False
 DJANGO_SECRET_KEY=<strong-secret-key>
-DJANGO_ALLOWED_HOSTS=<backend-domain>
-DJANGO_CORS_ALLOWED_ORIGINS=https://<frontend-domain>
-DJANGO_CSRF_TRUSTED_ORIGINS=https://<frontend-domain>
+DJANGO_ALLOWED_HOSTS=<your-domain>
+DJANGO_CSRF_TRUSTED_ORIGINS=https://<your-domain>
 DJANGO_DB_NAME=<postgres-database-name>
 DJANGO_DB_USER=<postgres-user>
 DJANGO_DB_PASSWORD=<postgres-password>
@@ -171,6 +170,10 @@ DJANGO_DB_HOST=<postgres-host>
 DJANGO_DB_PORT=5432
 DJANGO_DB_SSLMODE=require
 ```
+
+`DJANGO_CORS_ALLOWED_ORIGINS` is only needed if the frontend is ever split
+onto a different domain than the backend again; the frontend and backend
+now share one origin, so no CORS config is required in production.
 
 ## 6. Backend Application
 
@@ -653,49 +656,75 @@ If email sending fails, the booking is still saved and the API response reports 
 
 ## 13. Deployment
 
-### 13.1 Backend Deployment
+The app is deployed as a single Django service that serves both the API
+and the built React frontend — there is no separate frontend host.
 
-Typical production steps:
+### 13.1 How the merge works
 
-```bash
-cd backend
-python -m pip install -r requirements.txt
-python manage.py migrate
-python manage.py collectstatic --noinput
-gunicorn backend.wsgi
-```
+- `frontend/vite.config.js` builds the React app into `backend/frontend_build/`
+  instead of `frontend/dist/`.
+- `backend/backend/settings.py` adds `frontend_build` to `TEMPLATES[0]["DIRS"]`
+  (so Django can render `index.html`) and sets `WHITENOISE_ROOT` to that same
+  directory (so WhiteNoise serves `/assets/*` and `/images/*` straight from
+  disk at the site root, matching the root-absolute paths the app already
+  uses, e.g. `/images/destinations/asmara.webp`).
+- `backend/backend/urls.py` serves `/admin/`, `/api/`, and `/media/<path>`
+  as before, then falls back to a catch-all view that renders `index.html`
+  for every other path — this is what makes React Router-style client
+  routes (and hard refreshes on them) work. Note the bare route `/admin`
+  (no trailing slash) is the React dashboard; `/admin/` is Django's real
+  admin — the trailing slash is what tells them apart.
+- Because everything is same-origin now, `frontend/src/App.jsx`'s built-in
+  defaults (`/api`, `window.location.origin`) are used automatically; you
+  no longer need `VITE_API_BASE_URL` etc. unless you split the frontend
+  onto a separate domain again.
 
-The included `build.sh` runs:
+### 13.2 Build & Run
 
-```bash
-cd backend
-python -m pip install -r requirements.txt
-python manage.py collectstatic --noinput
-python manage.py migrate
-```
-
-### 13.2 Frontend Deployment
+The included `build.sh` (used as Render's Build Command) runs:
 
 ```bash
 cd frontend
 npm install
 npm run build
+
+cd ../backend
+python -m pip install -r requirements.txt
+python manage.py collectstatic --noinput
+python manage.py migrate
 ```
 
-Deploy the generated `frontend/dist` folder to your static host.
+Start command:
 
-### 13.3 Production Checklist
+```bash
+cd backend
+gunicorn backend.wsgi
+```
+
+### 13.3 Render Setup
+
+1. Create one Web Service pointing at this repo.
+2. Build Command: `./build.sh` (repo root).
+3. Start Command: `cd backend && gunicorn backend.wsgi`.
+4. Set environment variables from `backend/.env.render.example`
+   (`DJANGO_ALLOWED_HOSTS` / `DJANGO_CSRF_TRUSTED_ORIGINS` should list the
+   Render domain and any custom domain — no separate frontend domain is
+   needed anymore).
+5. **Attach a persistent disk** mounted at `backend/` (or at least covering
+   `db.sqlite3` and `media/`). Without one, Render's filesystem is
+   ephemeral and every deploy/restart wipes the SQLite database and all
+   uploaded images. This is required, not optional, for this setup.
+
+### 13.4 Production Checklist
 
 - Set `DJANGO_DEBUG=False`.
 - Set a strong `DJANGO_SECRET_KEY`.
-- Configure `DJANGO_ALLOWED_HOSTS`.
-- Configure CORS and CSRF trusted origins.
-- Use PostgreSQL.
-- Run migrations.
-- Collect static files.
-- Configure HTTPS.
+- Configure `DJANGO_ALLOWED_HOSTS` and `DJANGO_CSRF_TRUSTED_ORIGINS`.
+- Attach a persistent disk for `db.sqlite3` and `media/` (see 13.3).
+- Run migrations and collect static files (handled by `build.sh`).
+- Configure HTTPS (Render provides this automatically, including for
+  custom domains).
 - Configure SMTP if booking emails should be sent.
-- Ensure media files are served or stored in a production-ready media storage.
 
 ## 14. Troubleshooting
 

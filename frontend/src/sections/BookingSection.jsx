@@ -31,13 +31,13 @@ function BookingSection({
   basePriceLabel,
   perTravelerLabel,
   totalTravelersLabel,
-  packageCountLabel
+  packageCountLabel,
+  t
 }) {
   const [form, setForm] = useState({
     name: "",
     email: "",
     origin_country: "",
-    group_size: 1,
     adults: 1,
     children: 0,
     infants: 0,
@@ -55,11 +55,13 @@ function BookingSection({
     return `${year}-${month}-${day}`;
   }, []);
 
+  const groupSize = form.adults + form.children + form.infants;
+
   const basePackagesTotal = useMemo(
     () => selectedPackages.reduce((sum, item) => sum + (item.price_usd || 0), 0),
     [selectedPackages]
   );
-  const estimatedTotal = basePackagesTotal * Math.max(1, Number(form.group_size) || 1);
+  const estimatedTotal = basePackagesTotal * Math.max(1, groupSize);
   const confirmationPackages = confirmation?.selected_packages || [];
 
   const handleChange = (event) => {
@@ -71,20 +73,14 @@ function BookingSection({
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
-
-    if (form.group_size !== form.adults + form.children + form.infants) {
-      setError(labels.groupMismatch);
-      return;
-    }
-
     setLoading(true);
+
     try {
-      await onSubmit(form);
+      await onSubmit({ ...form, group_size: groupSize });
       setForm({
         name: "",
         email: "",
         origin_country: "",
-        group_size: 1,
         adults: 1,
         children: 0,
         infants: 0,
@@ -101,15 +97,15 @@ function BookingSection({
   return (
     <section className="content-section booking-section" id={id}>
       <div className="section-heading booking-heading">
-        <p className="eyebrow">Booking</p>
+        <p className="eyebrow">{t.bookingEyebrow}</p>
         <h2>{title}</h2>
-        <p className="muted booking-lead">Choose your packages, confirm the estimate, and send your request in one step.</p>
+        <p className="muted booking-lead">{t.bookingLead}</p>
       </div>
 
       <div className="booking-layout booking-layout-enhanced">
         <div className="booking-copy booking-summary-panel">
           <div className="booking-summary-intro">
-            <span className="booking-summary-kicker">Trip Planner</span>
+            <span className="booking-summary-kicker">{t.tripPlannerKicker}</span>
             <h3>{planningTitle}</h3>
             <p>{planningText}</p>
           </div>
@@ -121,7 +117,7 @@ function BookingSection({
             </article>
             <article className="booking-stat-card">
               <span>{totalTravelersLabel}</span>
-              <strong>{form.group_size}</strong>
+              <strong>{groupSize}</strong>
             </article>
             <article className="booking-stat-card booking-stat-card-accent">
               <span>{estimatedTotalLabel}</span>
@@ -160,7 +156,7 @@ function BookingSection({
 
         <form className="booking-form booking-form-enhanced" onSubmit={handleSubmit}>
           <div className="booking-form-intro">
-            <strong>Traveler details</strong>
+            <strong>{t.travelerDetailsTitle}</strong>
             <span>{labels.packageNote}</span>
           </div>
           <div className="booking-form-grid">
@@ -202,17 +198,10 @@ function BookingSection({
             </label>
           </div>
           <div className="traveler-panel booking-traveler-panel">
-            <label className="traveler-total">
-              {labels.groupSize}
-              <input
-                type="number"
-                name="group_size"
-                value={form.group_size}
-                onChange={handleChange}
-                min="1"
-                required
-              />
-            </label>
+            <div className="traveler-total traveler-total-readout">
+              <span>{labels.groupSize}</span>
+              <strong>{groupSize}</strong>
+            </div>
             <div className="traveler-grid booking-traveler-grid">
               <label>
                 {labels.adults}
@@ -265,7 +254,7 @@ function BookingSection({
               <strong>{formatPrice(currency, estimatedTotal)}</strong>
             </div>
             <button type="submit" className="primary-btn" disabled={loading}>
-              {loading ? "Sending..." : labels.submit}
+              {loading ? labels.sending : labels.submit}
             </button>
           </div>
           {error ? <p className="error-message">{error}</p> : null}
@@ -273,36 +262,36 @@ function BookingSection({
           {confirmation ? (
             <article className="booking-confirmation-card">
               <div className="booking-confirmation-heading">
-                <span>Booking received</span>
-                <strong>Reference #{confirmation.id}</strong>
+                <span>{t.confirmationReceivedLabel}</span>
+                <strong>{t.confirmationReferenceLabel}{confirmation.id}</strong>
               </div>
               <div className="booking-confirmation-grid">
                 <div>
-                  <span>Name</span>
+                  <span>{t.confirmationNameLabel}</span>
                   <strong>{confirmation.name}</strong>
                 </div>
                 <div>
-                  <span>Email</span>
+                  <span>{t.confirmationEmailLabel}</span>
                   <strong>{confirmation.email}</strong>
                 </div>
                 <div>
-                  <span>Travel date</span>
+                  <span>{t.confirmationTravelDateLabel}</span>
                   <strong>{confirmation.travel_date}</strong>
                 </div>
                 <div>
-                  <span>Travelers</span>
+                  <span>{t.confirmationTravelersLabel}</span>
                   <strong>{confirmation.group_size}</strong>
                 </div>
                 <div>
-                  <span>Adults</span>
+                  <span>{labels.adults}</span>
                   <strong>{confirmation.adults}</strong>
                 </div>
                 <div>
-                  <span>Children</span>
+                  <span>{labels.children}</span>
                   <strong>{confirmation.children}</strong>
                 </div>
                 <div>
-                  <span>Infants</span>
+                  <span>{labels.infants}</span>
                   <strong>{confirmation.infants}</strong>
                 </div>
                 <div>
@@ -311,7 +300,7 @@ function BookingSection({
                 </div>
               </div>
               <div className="booking-confirmation-packages">
-                <span>Selected packages</span>
+                <span>{t.confirmationSelectedPackagesLabel}</span>
                 {confirmationPackages.length ? (
                   <div className="booking-confirmation-package-list">
                     {confirmationPackages.map((item) => (
@@ -324,7 +313,7 @@ function BookingSection({
                     ))}
                   </div>
                 ) : (
-                  <p>No tour packages selected.</p>
+                  <p>{t.confirmationNoPackagesLabel}</p>
                 )}
               </div>
             </article>

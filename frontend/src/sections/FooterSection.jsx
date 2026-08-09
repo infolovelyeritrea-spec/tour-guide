@@ -22,20 +22,20 @@ const fallbackSocialLinks = [
   { name: "Facebook", href: "https://facebook.com/lovelyeritrea", icon: "facebook", detail: "Lovely Eritrea" }
 ];
 
-function FooterSection({ id, aboutTitle, aboutText, contactTitle, contactDetails, socialLinks = fallbackSocialLinks }) {
+function FooterSection({ id, aboutTitle, aboutText, contactTitle, contactDetails, socialLinks = fallbackSocialLinks, t }) {
   return (
     <footer className="footer" id={id}>
       <div className="footer-panel footer-about-panel">
-        <p className="eyebrow">About Us</p>
+        <p className="eyebrow">{t.footerAboutEyebrow}</p>
         <h2>{aboutTitle}</h2>
         <p className="footer-lead">{aboutText}</p>
         <div className="footer-note-card">
-          <strong>Travel with clarity</strong>
-          <p>From city stays to Red Sea escapes, we make planning feel calm, local, and personal.</p>
+          <strong>{t.footerNoteTitle}</strong>
+          <p>{t.footerNoteText}</p>
         </div>
       </div>
       <div className="footer-panel footer-contact-panel">
-        <p className="eyebrow">Contact</p>
+        <p className="eyebrow">{t.footerContactEyebrow}</p>
         <h3>{contactTitle}</h3>
         <div className="contact-list">
           {contactDetails.map((detail) => (
