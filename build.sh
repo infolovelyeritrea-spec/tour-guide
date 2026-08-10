@@ -17,10 +17,18 @@ User = get_user_model()
 username = os.environ.get("DJANGO_SUPERUSER_USERNAME")
 email = os.environ.get("DJANGO_SUPERUSER_EMAIL", "")
 password = os.environ.get("DJANGO_SUPERUSER_PASSWORD")
-if username and password and not User.objects.filter(username=username).exists():
-    User.objects.create_superuser(username=username, email=email, password=password)
-    print("Created superuser " + username)
+if not username or not password:
+    print("DJANGO_SUPERUSER_USERNAME/PASSWORD not set; skipping superuser setup.")
 else:
-    print("Superuser already exists or DJANGO_SUPERUSER_* vars not set; skipping.")
+    user, created = User.objects.get_or_create(
+        username=username,
+        defaults={"email": email, "is_staff": True, "is_superuser": True},
+    )
+    user.email = email or user.email
+    user.is_staff = True
+    user.is_superuser = True
+    user.set_password(password)
+    user.save()
+    print(("Created" if created else "Updated password for existing") + " superuser " + username)
 '
 python manage.py shell -c "$CREATE_SUPERUSER_CODE"
