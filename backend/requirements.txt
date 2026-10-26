@@ -6,3 +6,4 @@ gunicorn>=23.0,<24.0
 whitenoise>=6.9,<7.0
 Pillow>=11.0,<12.0
 pillow-heif>=0.21,<0.22
+django-storages[s3]>=1.14,<1.15

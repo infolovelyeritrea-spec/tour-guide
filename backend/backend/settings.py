@@ -146,20 +146,49 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
 if HAS_WHITENOISE:
-    STORAGES = {
-        "default": {
-            "BACKEND": "django.core.files.storage.FileSystemStorage",
-        },
-        "staticfiles": {
-            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-        }
+    STORAGES["staticfiles"] = {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     }
     if FRONTEND_BUILD_DIR.exists():
         # Serves the built frontend's assets/, images/, etc. directly at the
         # site root (not under /static/) since the app references them with
         # root-absolute paths like /images/destinations/asmara.webp.
         WHITENOISE_ROOT = FRONTEND_BUILD_DIR
+
+# Uploaded media (hero/destination/gallery images) is stored on Cloudflare R2
+# instead of local disk whenever R2 credentials are configured, since Render's
+# filesystem is ephemeral without a paid persistent disk. Falls back to local
+# filesystem storage (above) when these env vars aren't set, e.g. local dev.
+AWS_R2_ACCOUNT_ID = os.getenv("DJANGO_R2_ACCOUNT_ID", "").strip()
+AWS_ACCESS_KEY_ID = os.getenv("DJANGO_R2_ACCESS_KEY_ID", "").strip()
+AWS_SECRET_ACCESS_KEY = os.getenv("DJANGO_R2_SECRET_ACCESS_KEY", "").strip()
+AWS_STORAGE_BUCKET_NAME = os.getenv("DJANGO_R2_BUCKET_NAME", "").strip()
+_r2_public_url = os.getenv("DJANGO_R2_PUBLIC_URL", "").strip()
+
+HAS_R2_CONFIG = all(
+    [AWS_R2_ACCOUNT_ID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME, _r2_public_url]
+)
+
+if HAS_R2_CONFIG:
+    AWS_S3_ENDPOINT_URL = f"https://{AWS_R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+    AWS_S3_CUSTOM_DOMAIN = _r2_public_url.removeprefix("https://").removeprefix("http://").rstrip("/")
+    AWS_S3_REGION_NAME = "auto"
+    AWS_S3_SIGNATURE_VERSION = "s3v4"
+    AWS_DEFAULT_ACL = None
+    AWS_QUERYSTRING_AUTH = False
+    AWS_S3_FILE_OVERWRITE = False
+    STORAGES["default"] = {"BACKEND": "storages.backends.s3.S3Storage"}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
